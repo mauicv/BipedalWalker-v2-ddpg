@@ -92,8 +92,12 @@ def play(ctx, steps):
 @cli.command()
 @click.pass_context
 def clean(ctx):
-    for loc in os.listdir('save'):
-        shutil.rmtree(f'/save/{loc}')
+    for save_path in os.listdir('save'):
+        path = f'./save/{save_path}'
+        if os.path.isfile(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
 
 
 if __name__ == '__main__':
