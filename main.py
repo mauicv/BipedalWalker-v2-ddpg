@@ -45,7 +45,7 @@ def train(ctx, episodes, steps):
     env, state_space_dim, action_space_dim = setup_env()
     replay_buffer = ReplayBuffer(state_space_dim=state_space_dim,
                                  action_space_dim=action_space_dim,
-                                 size=10000)
+                                 size=1000000)
 
     agent = Agent(state_space_dim,
                   action_space_dim,
