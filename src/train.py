@@ -21,6 +21,7 @@ class Train:
         self.critic_opt = tf.keras.optimizers\
             .Adam(learning_rate=self.critic_learning_rate)
 
+    @tf.function
     def __call__(self, agent, states, next_states, actions, rewards, dones):
         """Runs ddpg algorithm on agent actor and critic networks."""
         actor_variables = agent.actor.trainable_variables
@@ -33,18 +34,18 @@ class Train:
             y = rewards[:, None] + self.discount_factor*(1 - dones) * \
                 agent.target_critic(Q_input)
             Q_input = tf.concat([states, actions], axis=1)
-            squared_error = tf.pow(y - agent.critic(Q_input), 2)
+            td_error = tf.stop_gradient(y) - agent.critic(Q_input)
+            squared_error = tf.pow(td_error, 2)
             Q_loss = tf.reduce_mean(squared_error)
         critic_grads = critic_tape.gradient(Q_loss, critic_variables)
-        self.critic_opt.apply_gradients(zip(critic_grads,
-                                        critic_variables))
+        self.critic_opt.apply_gradients(zip(critic_grads, critic_variables))
 
         # update actor
         with tf.GradientTape() as actor_tape:
             actions = agent.actor(states)
             Q_input = tf.concat([states, actions], axis=1)
-            policy_loss = tf.reduce_mean(agent.critic(Q_input))
+            policy_loss = -tf.reduce_mean(agent.critic(Q_input))
         actor_grads = actor_tape.gradient(policy_loss, actor_variables)
         self.actor_opt.apply_gradients(zip(actor_grads, actor_variables))
 
-        return Q_loss.numpy(), policy_loss.numpy()
+        # return Q_loss.numpy(), policy_loss.numpy()

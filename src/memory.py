@@ -13,22 +13,23 @@ class ReplayBuffer:
             self,
             action_space_dim,
             state_space_dim,
-            size=10000,
+            size=1000000,
             sample_size=64):
-        self.states = np.zeros((size, state_space_dim))
-        self.next_states = np.zeros((size, state_space_dim))
-        self.actions = np.zeros((size, action_space_dim))
-        self.rewards = np.zeros(size)
-        self.dones = np.zeros(size)
+        self.states = np.zeros((size, state_space_dim), dtype='float32')
+        self.next_states = np.zeros((size, state_space_dim), dtype='float32')
+        self.actions = np.zeros((size, action_space_dim), dtype='float32')
+        self.rewards = np.zeros(size, dtype='float32')
+        self.dones = np.zeros(size, dtype='float32')
         self._end_index = 0
         self.sample_size = sample_size
 
     def push(self, state, next_state, action, reward, done):
-        self.states[self._end_index % len(self.states)] = state
-        self.next_states[self._end_index % len(self.states)] = next_state
-        self.actions[self._end_index % len(self.states)] = action
-        self.rewards[self._end_index % len(self.states)] = reward
-        self.dones[self._end_index % len(self.states)] = done
+        index = self._end_index % len(self.states)
+        self.states[index] = state
+        self.next_states[index] = next_state
+        self.actions[index] = action
+        self.rewards[index] = reward
+        self.dones[index] = done
         self._end_index += 1
 
     @property

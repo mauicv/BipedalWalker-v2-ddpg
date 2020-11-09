@@ -3,6 +3,8 @@ from src.agent import Agent
 import click
 import os
 import shutil
+from time import time
+import numpy as np
 
 from src.memory import ReplayBuffer
 from src.train import Train
@@ -32,7 +34,13 @@ def cli(ctx):
 @click.option('--steps', '-s', default=200, type=int,
               help='Max number of steps per episode')
 def train(ctx, episodes, steps):
-    logger = Logging(['episode', 'rewards', 'episode_length'])
+    logger = Logging([
+        'episode',
+        'rewards',
+        'episode_length',
+        'epsiode_run_time',
+        'average_step_run_time'
+    ])
 
     env, state_space_dim, action_space_dim = setup_env()
     replay_buffer = ReplayBuffer(state_space_dim=state_space_dim,
@@ -43,21 +51,29 @@ def train(ctx, episodes, steps):
                   action_space_dim,
                   low_action=-1,
                   high_action=1,
+                  exploration_value=0.2,
+                  tau=0.05,
                   load=True)
 
     train = Train(discount_factor=0.99,
-                  actor_learning_rate=0.00001,
-                  critic_learning_rate=0.00001)
+                  actor_learning_rate=0.00005,
+                  critic_learning_rate=0.0005)
 
     for episode in range(episodes):
-        state = env.reset()
+        state = np.array(env.reset(), dtype='float32')
         episode_reward = 0
         step_count = 0
         done = False
+        episode_start_time = time()
+        step_times = []
         while not done and step_count < steps:
+            step_time_start = time()
             step_count += 1
+
+            # training code
             action = agent.get_action(state[None], with_exploration=True)[0]
             next_state, reward, done, _ = env.step(action)
+
             replay_buffer.push(state, next_state, action, reward, done)
             episode_reward += reward
             if replay_buffer.ready:
@@ -65,25 +81,38 @@ def train(ctx, episodes, steps):
                     rewards, dones = replay_buffer.sample()
                 train(agent, states, next_states, actions, rewards, dones)
                 agent.track_weights()
-
-        logger.log([episode, episode_reward, step_count])
+            step_time_end = time()
+            step_times.append(step_time_end - step_time_start)
+        episode_end_time = time()
+        epsiode_time = episode_end_time - episode_start_time
+        average_step_time = np.array(step_times).mean()
+        logger.log([
+            episode,
+            episode_reward,
+            step_count,
+            epsiode_time,
+            average_step_time,
+        ])
         agent.save_models()
 
 
 @cli.command()
 @click.pass_context
-@click.option('--steps', '-s', default=1000, type=int,
+@click.option('--steps', '-s', default=100, type=int,
               help='Max number of steps per episode')
-def play(ctx, steps):
+@click.option('--noise', '-n', is_flag=True,
+              help='With exploration')
+def play(ctx, steps, noise):
     env, state_space_dim, action_space_dim = setup_env()
     agent = Agent(state_space_dim,
                   action_space_dim,
                   low_action=-1,
                   high_action=1,
+                  exploration_value=0.2,
                   load=True)
     state = env.reset()
     for i in range(steps):
-        action = agent.get_action(state[None])[0]
+        action = agent.get_action(state[None], with_exploration=noise)[0]
         state, reward, done, _ = env \
             .step(action)
         env.render()
