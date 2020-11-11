@@ -73,14 +73,15 @@ def train(ctx, episodes, steps):
             # training code
             action = agent.get_action(state[None], with_exploration=True)[0]
             next_state, reward, done, _ = env.step(action)
-
             replay_buffer.push(state, next_state, action, reward, done)
-            episode_reward += reward
             if replay_buffer.ready:
                 states, next_states, actions, \
                     rewards, dones = replay_buffer.sample()
                 train(agent, states, next_states, actions, rewards, dones)
                 agent.track_weights()
+            state = next_state
+
+            episode_reward += reward
             step_time_end = time()
             step_times.append(step_time_end - step_time_start)
         episode_end_time = time()

@@ -22,7 +22,7 @@ class Agent:
         self.high_action = high_action
         self.tau = tau
         self.actor, self.critic = (None, None)
-        if not self.load_models():
+        if not load or not self.load_models():
             self.actor, self.critic = \
                 build_models(state_space_dim, action_space_dim)
         assert((self.actor, self.critic) != (None, None))
