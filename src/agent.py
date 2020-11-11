@@ -55,6 +55,7 @@ class Agent:
                    for target_weight, weight in zip(target_weights, weights)]
         target_model.set_weights(weights)
 
+    @tf.function
     def get_action(self, state, with_exploration=False):
         action = self.actor(state)
         if with_exploration:

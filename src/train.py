@@ -48,4 +48,4 @@ class Train:
         actor_grads = actor_tape.gradient(policy_loss, actor_variables)
         self.actor_opt.apply_gradients(zip(actor_grads, actor_variables))
 
-        # return Q_loss.numpy(), policy_loss.numpy()
+        return Q_loss, policy_loss
