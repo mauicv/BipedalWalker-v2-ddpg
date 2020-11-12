@@ -57,7 +57,7 @@ class Agent:
 
     @tf.function
     def get_action(self, state, with_exploration=False):
-        action = self.actor(state)
+        action = self.actor(state)*2  # hack for pendulum action space.
         if with_exploration:
             action = action + tf.random\
                 .normal(action.shape, mean=0.0,

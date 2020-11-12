@@ -31,11 +31,11 @@ class Train:
         with tf.GradientTape() as critic_tape:
             next_actions = agent.target_actor(next_states)
             Q_input = tf.concat([next_states, next_actions], axis=1)
-            y = rewards[:, None] + self.discount_factor*(1 - dones) * \
-                agent.target_critic(Q_input)
+            y = rewards + self.discount_factor * (1 - dones) * \
+                agent.target_critic(Q_input)[:, 0]
             Q_input = tf.concat([states, actions], axis=1)
-            td_error = tf.stop_gradient(y) - agent.critic(Q_input)
-            squared_error = tf.pow(td_error, 2)
+            td_error = tf.stop_gradient(y) - agent.critic(Q_input)[:, 0]
+            squared_error = tf.math.square(td_error)
             Q_loss = tf.reduce_mean(squared_error)
         critic_grads = critic_tape.gradient(Q_loss, critic_variables)
         self.critic_opt.apply_gradients(zip(critic_grads, critic_variables))
