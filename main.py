@@ -10,8 +10,8 @@ from src.memory import ReplayBuffer
 from src.train import Train
 from src.logging import Logging
 
-# ENV_NAME = 'BipedalWalker-v3'
-ENV_NAME = 'Pendulum-v0'
+ENV_NAME = 'BipedalWalker-v3'
+# ENV_NAME = 'Pendulum-v0'
 
 
 def setup_env():
@@ -56,7 +56,8 @@ def train(ctx, episodes, steps):
         max_action = setup_env()
     replay_buffer = ReplayBuffer(state_space_dim=state_space_dim,
                                  action_space_dim=action_space_dim,
-                                 size=50000)
+                                 size=50000,
+                                 sample_size=64)
 
     agent = Agent(state_space_dim,
                   action_space_dim,
@@ -67,8 +68,8 @@ def train(ctx, episodes, steps):
                   load=True)
 
     train = Train(discount_factor=0.99,
-                  actor_learning_rate=0.001,
-                  critic_learning_rate=0.002)
+                  actor_learning_rate=0.00005,
+                  critic_learning_rate=0.0005)
 
     training_rewards = []
     for episode in range(episodes):
@@ -138,6 +139,9 @@ def play(ctx, steps, noise):
                   exploration_value=0.01,
                   load=True)
     state = env.reset()
+
+    agent.actor.summary()
+    agent.critic.summary()
     for i in range(steps):
         action = agent.get_action(state[None], with_exploration=noise)[0]
         state, reward, done, _ = env \

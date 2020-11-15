@@ -11,10 +11,10 @@ def get_actor(state_dim, action_dim, layer_dims, upper_bound):
     last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
     inputs = tf.keras.layers.Input(shape=(state_dim,))
     out = tf.keras.layers.Dense(
-        256, activation="relu",
+        layer_dims[0], activation="relu",
         )(inputs)
     out = tf.keras.layers.Dense(
-        256, activation="relu",
+        layer_dims[1], activation="relu",
         )(out)
     outputs = tf.keras.layers.Dense(
         action_dim, activation="tanh", kernel_initializer=last_init)(out)
@@ -28,6 +28,6 @@ def get_critic(state_dim, action_dim, layer_dims):
     action_input = tf.keras.layers.Input(shape=(action_dim))
     concat = tf.keras.layers.Concatenate()([state_input, action_input])
     out = tf.keras.layers.Dense(layer_dims[0], activation="relu")(concat)
-    out = tf.keras.layers.Dense(layer_dims[0], activation="relu")(out)
+    out = tf.keras.layers.Dense(layer_dims[1], activation="relu")(out)
     outputs = tf.keras.layers.Dense(1)(out)
     return tf.keras.Model([state_input, action_input], outputs)
