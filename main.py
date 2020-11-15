@@ -44,6 +44,7 @@ def train(ctx, episodes, steps):
     logger = Logging([
         'episode',
         'rewards',
+        'running_40_episode_reward',
         'episode_length',
         'epsiode_run_time',
         'average_step_run_time',
@@ -55,22 +56,23 @@ def train(ctx, episodes, steps):
         max_action = setup_env()
     replay_buffer = ReplayBuffer(state_space_dim=state_space_dim,
                                  action_space_dim=action_space_dim,
-                                 size=1000000)
+                                 size=50000)
 
     agent = Agent(state_space_dim,
                   action_space_dim,
                   low_action=min_action,
                   high_action=max_action,
-                  exploration_value=0.4,
+                  exploration_value=0.01,
                   tau=0.05,
                   load=True)
 
     train = Train(discount_factor=0.99,
-                  actor_learning_rate=0.00005,
-                  critic_learning_rate=0.0005)
+                  actor_learning_rate=0.001,
+                  critic_learning_rate=0.002)
 
+    training_rewards = []
     for episode in range(episodes):
-        state = np.array(env.reset(), dtype='float32')/state_norm_array
+        state = np.array(env.reset(), dtype='float32')
         episode_reward = 0
         step_count = 0
         done = False
@@ -78,15 +80,17 @@ def train(ctx, episodes, steps):
         step_times = []
         q_losses = []
         p_losses = []
-        while not done and step_count < steps:
+        while not done:
+            if step_count >= steps:
+                break
+
             step_time_start = time()
             step_count += 1
 
             # environment step
             action = agent.get_action(state[None], with_exploration=True)[0]
             next_state, reward, done, _ = env.step(action)
-            next_state = next_state/state_norm_array
-            replay_buffer.push(state, next_state, action, reward, done)
+            replay_buffer.push((state, next_state, action, reward, done))
             state = next_state
 
             # training step
@@ -103,20 +107,17 @@ def train(ctx, episodes, steps):
             episode_reward += reward
             step_time_end = time()
             step_times.append(step_time_end - step_time_start)
+        training_rewards.append(episode_reward)
         episode_end_time = time()
         epsiode_time = episode_end_time - episode_start_time
         average_step_time = np.array(step_times).mean()
         average_q_loss = np.array(q_losses).mean()
         average_p_loss = np.array(p_losses).mean()
-        logger.log([
-            episode,
-            episode_reward,
-            step_count,
-            epsiode_time,
-            average_step_time,
-            average_q_loss,
-            average_p_loss
-        ])
+        running_40_episode_reward = np.mean(training_rewards[-40:])
+
+        logger.log([episode, episode_reward, running_40_episode_reward,
+                    step_count, epsiode_time, average_step_time,
+                    average_q_loss, average_p_loss])
 
         agent.save_models()
 
@@ -134,14 +135,14 @@ def play(ctx, steps, noise):
                   action_space_dim,
                   low_action=min_action,
                   high_action=max_action,
-                  exploration_value=0.4,
+                  exploration_value=0.01,
                   load=True)
-    state = env.reset()/state_norm_array
+    state = env.reset()
     for i in range(steps):
         action = agent.get_action(state[None], with_exploration=noise)[0]
         state, reward, done, _ = env \
             .step(action)
-        state = state/state_norm_array
+        state = state
         env.render()
 
 

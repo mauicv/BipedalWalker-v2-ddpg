@@ -23,8 +23,12 @@ class Agent:
         self.tau = tau
         self.actor, self.critic = (None, None)
         if not load or not self.load_models():
+            print("Creating new models")
             self.actor, self.critic = \
-                build_models(state_space_dim, action_space_dim)
+                build_models(
+                    state_space_dim,
+                    action_space_dim,
+                    upper_bound=high_action)
         assert((self.actor, self.critic) != (None, None))
 
         self.target_actor, self.target_critic = \
@@ -45,19 +49,22 @@ class Agent:
         self.critic.save('./save/critic')
 
     def track_weights(self):
-        self._track_model_weights(self.target_actor, self.actor)
-        self._track_model_weights(self.target_critic, self.critic)
+        self._track_model_weights(
+            self.target_actor.variables,
+            self.actor.variables)
+        self._track_model_weights(
+            self.target_critic.variables,
+            self.critic.variables)
 
-    def _track_model_weights(self, target_model, model):
-        target_weights = target_model.get_weights()
-        weights = model.get_weights()
-        weights = [(1 - self.tau) * target_weight + self.tau * weight
-                   for target_weight, weight in zip(target_weights, weights)]
-        target_model.set_weights(weights)
+    @tf.function
+    def _track_model_weights(self, target_weights, weights):
+        for target_weight, weight in zip(target_weights, weights):
+            target_weight.assign(
+                weight * self.tau + target_weight * (1 - self.tau))
 
     @tf.function
     def get_action(self, state, with_exploration=False):
-        action = self.actor(state)*2  # hack for pendulum action space.
+        action = self.actor(state)*self.high_action
         if with_exploration:
             action = action + tf.random\
                 .normal(action.shape, mean=0.0,

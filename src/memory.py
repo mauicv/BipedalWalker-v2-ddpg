@@ -23,7 +23,8 @@ class ReplayBuffer:
         self._end_index = 0
         self.sample_size = sample_size
 
-    def push(self, state, next_state, action, reward, done):
+    def push(self, step_data):
+        (state, next_state, action, reward, done) = step_data
         index = self._end_index % len(self.states)
         self.states[index] = state
         self.next_states[index] = next_state
@@ -46,7 +47,7 @@ class ReplayBuffer:
         random_integers = random.sample(range(length), sample_size)
         index_array = np.array(random_integers)
         state_samples = self.states[index_array]
-        next_state_samples = self.states[index_array]
+        next_state_samples = self.next_states[index_array]
         action_samples = self.actions[index_array]
         reward_samples = self.rewards[index_array]
         done_samples = self.dones[index_array]
