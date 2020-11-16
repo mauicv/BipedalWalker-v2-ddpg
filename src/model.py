@@ -17,7 +17,7 @@ def get_actor(state_dim, action_dim, layer_dims, upper_bound):
         bias_initializer=tf.keras.initializers.RandomUniform(-f1, f1)
         )(inputs)
 
-    batch1 = tf.keras.layers.batch_normalization(out)
+    batch1 = tf.keras.layers.BatchNormalization()(out)
     layer1_activation = tf.nn.relu(batch1)
 
     f2 = 1. / np.sqrt(layer_dims[1])
@@ -27,7 +27,7 @@ def get_actor(state_dim, action_dim, layer_dims, upper_bound):
         bias_initializer=tf.keras.initializers.RandomUniform(-f2, f2)
         )(layer1_activation)
 
-    batch2 = tf.keras.layers.batch_normalization(out)
+    batch2 = tf.keras.layers.BatchNormalization()(out)
     layer2_activation = tf.nn.relu(batch2)
     last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
 
@@ -53,7 +53,7 @@ def get_critic(state_dim, action_dim, layer_dims):
         kernel_initializer=tf.keras.initializers.RandomUniform(-f1, f1),
         bias_initializer=tf.keras.initializers.RandomUniform(-f1, f1)
         )(concat)
-    batch1 = tf.keras.layers.batch_normalization(out)
+    batch1 = tf.keras.layers.BatchNormalization()(out)
     layer1_activation = tf.nn.relu(batch1)
 
     f2 = 1. / np.sqrt(layer_dims[1])
@@ -62,7 +62,7 @@ def get_critic(state_dim, action_dim, layer_dims):
         kernel_initializer=tf.keras.initializers.RandomUniform(-f2, f2),
         bias_initializer=tf.keras.initializers.RandomUniform(-f2, f2)
         )(layer1_activation)
-    batch2 = tf.keras.layers.batch_normalization(out)
+    batch2 = tf.keras.layers.BatchNormalization()(out)
     layer2_activation = tf.nn.relu(batch2)
     last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
 
