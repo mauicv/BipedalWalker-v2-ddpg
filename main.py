@@ -136,7 +136,7 @@ def play(ctx, steps, noise):
                   action_space_dim,
                   low_action=min_action,
                   high_action=max_action,
-                  exploration_value=0.01,
+                  exploration_value=0.2,
                   load=True)
     state = env.reset()
 
