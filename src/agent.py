@@ -14,10 +14,10 @@ class Agent:
             action_space_dim,
             low_action,
             high_action,
-            exploration_value=0.2,
+            noise_process,
             load=False,
             tau=0.05):
-        self.exploration_value = exploration_value
+        self.noise_process = noise_process
         self.low_action = low_action
         self.high_action = high_action
         self.tau = tau
@@ -66,9 +66,7 @@ class Agent:
     def get_action(self, state, with_exploration=False):
         action = self.actor(state)*self.high_action
         if with_exploration:
-            action = action + tf.random\
-                .normal(action.shape, mean=0.0,
-                        stddev=self.exploration_value)
+            action = action + self.noise_process()
             action = tf.clip_by_value(action,
                                       clip_value_min=self.low_action,
                                       clip_value_max=self.high_action)

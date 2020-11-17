@@ -8,17 +8,17 @@ Note: Not currently used in algorithm.
 import numpy as np
 
 
-class OUActionNoise:
+class OUNoise:
     def __init__(
             self,
-            mean,
-            std_deviation,
-            theta=0.15,
+            mu,
+            sigma=0.15,
+            theta=0.2,
             dt=1e-2,
             x_initial=None):
         self.theta = theta
-        self.mean = mean
-        self.std_dev = std_deviation
+        self.mu = mu
+        self.sigma = sigma
         self.dt = dt
         self.x_initial = x_initial
         self.reset()
@@ -27,9 +27,9 @@ class OUActionNoise:
         # Formula taken from https://www.wikipedia.org/wiki/Ornstein-Uhlenbeck_process. # noqa
         x = (
             self.x_prev
-            + self.theta * (self.mean - self.x_prev) * self.dt
-            + self.std_dev * np.sqrt(self.dt)
-            * np.random.normal(size=self.mean.shape)
+            + self.theta * (self.mu - self.x_prev) * self.dt
+            + self.sigma * np.sqrt(self.dt)
+            * np.random.normal(size=self.mu.shape)
         )
         # Store x into x_prev
         # Makes next noise dependent on current one
@@ -40,4 +40,23 @@ class OUActionNoise:
         if self.x_initial is not None:
             self.x_prev = self.x_initial
         else:
-            self.x_prev = np.zeros_like(self.mean)
+            self.x_prev = np.zeros_like(self.mu)
+
+
+class NormalNoise:
+    def __init__(
+            self,
+            mu,
+            sigma=0.2,
+            dt=1e-2):
+        self.mu = mu
+        self.sigma = sigma
+        self.dt = dt
+        self.reset()
+
+    def __call__(self):
+        return self.sigma * np.sqrt(self.dt) * \
+            np.random.normal(size=self.mu.shape)
+
+    def reset(self):
+        return

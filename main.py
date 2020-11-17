@@ -9,6 +9,8 @@ import numpy as np
 from src.memory import ReplayBuffer
 from src.train import Train
 from src.logging import Logging
+from src.noise import OUNoise
+
 
 ENV_NAME = 'BipedalWalker-v3'
 # ENV_NAME = 'Pendulum-v0'
@@ -56,14 +58,24 @@ def train(ctx, episodes, steps):
         max_action = setup_env()
     replay_buffer = ReplayBuffer(state_space_dim=state_space_dim,
                                  action_space_dim=action_space_dim,
-                                 size=50000,
+                                 size=100000,
                                  sample_size=64)
+
+    noise_process = OUNoise(
+        mu=np.zeros(action_space_dim),
+        sigma=0.15,
+        theta=0.2,
+        dt=1e-2)
+
+    # noise_process = NormalNoise(
+    #     mu=np.zeros(action_space_dim),
+    #     sigma=0.2)
 
     agent = Agent(state_space_dim,
                   action_space_dim,
                   low_action=min_action,
                   high_action=max_action,
-                  exploration_value=0.01,
+                  noise_process=noise_process,
                   tau=0.05,
                   load=True)
 
@@ -73,6 +85,7 @@ def train(ctx, episodes, steps):
 
     training_rewards = []
     for episode in range(episodes):
+        noise_process.reset()
         state = np.array(env.reset(), dtype='float32')
         episode_reward = 0
         step_count = 0
@@ -132,11 +145,22 @@ def train(ctx, episodes, steps):
 def play(ctx, steps, noise):
     env, state_space_dim, action_space_dim, state_norm_array, min_action, \
         max_action = setup_env()
+
+    noise_process = OUNoise(
+        mu=np.zeros(action_space_dim),
+        sigma=0.15,
+        theta=0.2,
+        dt=1e-2)
+
+    # noise_process = NormalNoise(
+    #     mu=np.zeros(action_space_dim),
+    #     sigma=0.2)
+
     agent = Agent(state_space_dim,
                   action_space_dim,
                   low_action=min_action,
                   high_action=max_action,
-                  exploration_value=0.2,
+                  noise_process=noise_process,
                   load=True)
     state = env.reset()
 
