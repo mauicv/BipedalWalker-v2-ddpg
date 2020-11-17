@@ -58,7 +58,7 @@ def get_critic(state_dim, action_dim, layer_dims):
 
     f2 = 1. / np.sqrt(layer_dims[1])
     out = tf.keras.layers.Dense(
-        layer_dims[0], activation="relu",
+        layer_dims[1], activation="relu",
         kernel_initializer=tf.keras.initializers.RandomUniform(-f2, f2),
         bias_initializer=tf.keras.initializers.RandomUniform(-f2, f2)
         )(layer1_activation)
@@ -67,7 +67,7 @@ def get_critic(state_dim, action_dim, layer_dims):
     last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
 
     outputs = tf.keras.layers.Dense(
-        1, activation="tanh",
+        1, activation="linear",
         kernel_initializer=last_init,
         kernel_regularizer=tf.keras.regularizers.l2(0.01)
         )(layer2_activation)
