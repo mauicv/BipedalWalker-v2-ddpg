@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 
-def build_models(state_dim, action_dim, layer_dims=[400, 300], upper_bound=2):
+def build_models(state_dim, action_dim, layer_dims=[400, 300], upper_bound=1):
     actor = get_actor(state_dim, action_dim, layer_dims, upper_bound)
     critic = get_critic(state_dim, action_dim, layer_dims)
     return actor, critic

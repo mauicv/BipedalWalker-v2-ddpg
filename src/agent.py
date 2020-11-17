@@ -15,6 +15,7 @@ class Agent:
             low_action,
             high_action,
             noise_process,
+            layer_dims=[32, 19],
             load=False,
             tau=0.05):
         self.noise_process = noise_process
@@ -28,11 +29,16 @@ class Agent:
                 build_models(
                     state_space_dim,
                     action_space_dim,
+                    layer_dims=layer_dims,
                     upper_bound=high_action)
         assert((self.actor, self.critic) != (None, None))
 
         self.target_actor, self.target_critic = \
-            build_models(state_space_dim, action_space_dim)
+            build_models(
+                state_space_dim,
+                action_space_dim,
+                layer_dims=layer_dims,
+                upper_bound=high_action)
         self.target_actor.set_weights(self.actor.get_weights())
         self.target_critic.set_weights(self.critic.get_weights())
 

@@ -42,8 +42,8 @@ class ReplayBuffer:
         return self._end_index >= len(self.states)
 
     def sample(self):
-        length = self._end_index if not self.full else len(self.states)
-        sample_size = self.sample_size if self.ready else self._end_index + 1
+        length = min(self._end_index, len(self.states))
+        sample_size = min(self.sample_size, self._end_index + 1)
         random_integers = random.sample(range(length), sample_size)
         index_array = np.array(random_integers)
         state_samples = self.states[index_array]

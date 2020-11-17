@@ -12,8 +12,17 @@ from src.logging import Logging
 from src.noise import OUNoise
 
 
-ENV_NAME = 'BipedalWalker-v3'
 # ENV_NAME = 'Pendulum-v0'
+ENV_NAME = 'BipedalWalker-v3'
+LAYERS_DIMS = [150, 100]
+TAU = 0.001
+SIGMA = 0.15
+THETA = 0.2
+BUFFER_SIZE = 100000
+BATCH_SIZE = 100
+DISCOUNT = 0.999
+ACTOR_LR = 0.0005
+CRITIC_LR = 0.0005
 
 
 def setup_env():
@@ -58,13 +67,13 @@ def train(ctx, episodes, steps):
         max_action = setup_env()
     replay_buffer = ReplayBuffer(state_space_dim=state_space_dim,
                                  action_space_dim=action_space_dim,
-                                 size=100000,
-                                 sample_size=64)
+                                 size=BUFFER_SIZE,
+                                 sample_size=BATCH_SIZE)
 
     noise_process = OUNoise(
         mu=np.zeros(action_space_dim),
-        sigma=0.15,
-        theta=0.2,
+        sigma=SIGMA,
+        theta=THETA,
         dt=1e-2)
 
     # noise_process = NormalNoise(
@@ -73,15 +82,16 @@ def train(ctx, episodes, steps):
 
     agent = Agent(state_space_dim,
                   action_space_dim,
+                  layer_dims=LAYERS_DIMS,
                   low_action=min_action,
                   high_action=max_action,
                   noise_process=noise_process,
-                  tau=0.05,
+                  tau=TAU,
                   load=True)
 
-    train = Train(discount_factor=0.99,
-                  actor_learning_rate=0.00005,
-                  critic_learning_rate=0.0005)
+    train = Train(discount_factor=DISCOUNT,
+                  actor_learning_rate=ACTOR_LR,
+                  critic_learning_rate=CRITIC_LR)
 
     training_rewards = []
     for episode in range(episodes):
@@ -112,7 +122,8 @@ def train(ctx, episodes, steps):
                 states, next_states, actions, \
                     rewards, dones = replay_buffer.sample()
                 q_loss, p_loss = \
-                    train(agent, states, next_states, actions, rewards, dones)
+                    train(agent, states, next_states,
+                          actions, rewards, dones)
                 agent.track_weights()
 
             if replay_buffer.ready:
@@ -148,8 +159,8 @@ def play(ctx, steps, noise):
 
     noise_process = OUNoise(
         mu=np.zeros(action_space_dim),
-        sigma=0.15,
-        theta=0.2,
+        sigma=SIGMA,
+        theta=THETA,
         dt=1e-2)
 
     # noise_process = NormalNoise(
@@ -158,6 +169,7 @@ def play(ctx, steps, noise):
 
     agent = Agent(state_space_dim,
                   action_space_dim,
+                  layer_dims=LAYERS_DIMS,
                   low_action=min_action,
                   high_action=max_action,
                   noise_process=noise_process,
