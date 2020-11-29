@@ -3,6 +3,25 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
+class NormalNoise:
+    def __init__(
+            self,
+            dim,
+            sigma=0.2,
+            dt=1e-2):
+        self.dim = dim
+        self.sigma = sigma
+        self.dt = dt
+        self.reset()
+
+    def __call__(self):
+        return self.sigma * np.sqrt(self.dt) * \
+            np.random.normal(size=self.dim)
+
+    def reset(self):
+        return
+
+
 class OUNoise:
     """Ornstein-Uhlenbeck process.
 
@@ -11,13 +30,13 @@ class OUNoise:
     """
     def __init__(
             self,
-            mu,
+            dim=1,
             sigma=0.15,
             theta=0.2,
             dt=1e-2,
             x_initial=None):
         self.theta = theta
-        self.mu = mu
+        self.dim = dim
         self.sigma = sigma
         self.dt = dt
         self.x_initial = x_initial
@@ -26,9 +45,9 @@ class OUNoise:
     def __call__(self):
         x = (
             self.x_prev
-            + self.theta * (self.mu - self.x_prev) * self.dt
+            + self.theta * (- self.x_prev) * self.dt
             + self.sigma * np.sqrt(self.dt)
-            * np.random.normal(size=self.mu.shape)
+            * np.random.normal(size=self.dim)
         )
         self.x_prev = x
         return x
@@ -37,7 +56,7 @@ class OUNoise:
         if self.x_initial is not None:
             self.x_prev = self.x_initial
         else:
-            self.x_prev = np.zeros_like(self.mu)
+            self.x_prev = np.zeros(self.dim)
 
 
 class LinearSegmentNoise:
@@ -50,21 +69,21 @@ class LinearSegmentNoise:
     """
     def __init__(
             self,
-            mu,
+            dim=1,
             sigma=0.2,
-            event_prob=0.05,
+            event_prob=0.1,
             dt=1e-2):
-        self.mu = mu
+        self.dim = dim
         self.sigma = sigma
         self.event_prob = event_prob
         self.dt = dt
-        self.prev_event = np.zeros_like(self.mu)
-        self.current = np.zeros_like(self.mu)
+        self.prev_event = np.zeros(self.dim)
+        self.current = np.zeros(self.dim)
         self.next_event = self.get_next_event()
 
     def get_next_event(self):
         return self.sigma * np.sqrt(self.dt) * \
-            np.random.normal(size=self.mu.shape)
+            np.random.normal(np.zeros(self.dim))
 
     def __call__(self):
         if np.random.uniform(0, 1, 1) < self.event_prob:
@@ -75,9 +94,9 @@ class LinearSegmentNoise:
         return self.current
 
     def reset(self):
-        self.prev_event = np.zeros_like(self.mu)
+        self.prev_event = np.zeros(self.dim)
         self.next_event = self.get_next_event()
-        self.current = np.zeros_like(self.mu)
+        self.current = np.zeros(self.dim)
 
 
 class SmoothNoise1D:
@@ -94,6 +113,7 @@ class SmoothNoise1D:
             dt=1e-2):
         self.sigma = sigma
         self.steps = steps
+        self.dt = dt
         self.num_interp_points = num_interp_points
         self.orb = np.linspace(0, steps, num=steps+1, endpoint=True)
         self.points_x = None
@@ -108,7 +128,8 @@ class SmoothNoise1D:
                     self.orb[1:-1],
                     size=self.num_interp_points,
                     replace=False), self.steps+1])
-        self.points_y = np.random.normal(size=(len(self.points_x)))
+        self.points_y = self.sigma * np.sqrt(self.dt) * \
+            np.random.normal(size=(len(self.points_x)))
         self.step_ind = 0
         self.f = interp1d(
             self.points_x,
@@ -147,22 +168,3 @@ class SmoothNoiseND:
 
     def reset(self):
         return [g.reset() for g in self.generator]
-
-
-class NormalNoise:
-    def __init__(
-            self,
-            mu,
-            sigma=0.2,
-            dt=1e-2):
-        self.mu = mu
-        self.sigma = sigma
-        self.dt = dt
-        self.reset()
-
-    def __call__(self):
-        return self.sigma * np.sqrt(self.dt) * \
-            np.random.normal(size=self.mu.shape)
-
-    def reset(self):
-        return

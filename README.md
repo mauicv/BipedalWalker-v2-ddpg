@@ -1,5 +1,7 @@
 ## Bipedal Walker OpenAI gym Reinforcement Learning solution.
 
+![bipedal walker solution](/bipedal_walker_solution/ending.gif)
+
 ___
 
 

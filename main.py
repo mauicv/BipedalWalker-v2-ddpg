@@ -9,7 +9,8 @@ import numpy as np
 from src.memory import ReplayBuffer
 from src.train import Train
 from src.logging import Logging
-from src.noise import OUNoise
+from src.noise import OUNoise, LinearSegmentNoise, SmoothNoise1D, \
+    SmoothNoiseND, NormalNoise # noqa
 
 
 # ENV_NAME = 'Pendulum-v0'
@@ -70,15 +71,24 @@ def train(ctx, episodes, steps):
                                  size=BUFFER_SIZE,
                                  sample_size=BATCH_SIZE)
 
-    noise_process = OUNoise(
-        mu=np.zeros(action_space_dim),
-        sigma=SIGMA,
-        theta=THETA,
-        dt=1e-2)
+    # noise_process = OUNoise(
+    #     dim=action_space_dim,
+    #     sigma=SIGMA,
+    #     theta=THETA,
+    #     dt=1e-2)
 
     # noise_process = NormalNoise(
-    #     mu=np.zeros(action_space_dim),
-    #     sigma=0.2)
+    #     dim=action_space_dim,
+    #     sigma=SIGMA)
+
+    # noise_process = LinearSegmentNoise(
+    #     dim=action_space_dim,
+    #     sigma=SIGMA)
+
+    noise_process = SmoothNoiseND(
+        steps=steps,
+        dim=action_space_dim,
+        sigma=SIGMA)
 
     agent = Agent(state_space_dim,
                   action_space_dim,
@@ -157,15 +167,24 @@ def play(ctx, steps, noise):
     env, state_space_dim, action_space_dim, state_norm_array, min_action, \
         max_action = setup_env()
 
-    noise_process = OUNoise(
-        mu=np.zeros(action_space_dim),
-        sigma=SIGMA,
-        theta=THETA,
-        dt=1e-2)
+    # noise_process = OUNoise(
+    #     dim=action_space_dim,
+    #     sigma=SIGMA,
+    #     theta=THETA,
+    #     dt=1e-2)
 
     # noise_process = NormalNoise(
-    #     mu=np.zeros(action_space_dim),
-    #     sigma=0.2)
+    #     dim=action_space_dim,
+    #     sigma=SIGMA)
+
+    # noise_process = LinearSegmentNoise(
+    #     dim=action_space_dim,
+    #     sigma=SIGMA)
+
+    noise_process = SmoothNoiseND(
+        steps=steps,
+        dim=action_space_dim,
+        sigma=SIGMA)
 
     agent = Agent(state_space_dim,
                   action_space_dim,
@@ -174,6 +193,7 @@ def play(ctx, steps, noise):
                   high_action=max_action,
                   noise_process=noise_process,
                   load=True)
+
     state = env.reset()
 
     agent.actor.summary()
